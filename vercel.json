@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/unmixr-api/:path*",
+      "destination": "https://unmixr.com/api/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
