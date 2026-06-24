@@ -29,7 +29,7 @@ function App() {
       .then(data => {
         const voiceList = data.results || data.data || [];
         if (Array.isArray(voiceList) && voiceList.length > 0) {
-          const formattedVoices = voiceList.map(v => ({ 
+          let formattedVoices = voiceList.map(v => ({ 
             id: v.uuid || v.id || v.voice_id, 
             name: v.character || v.name || v.voice_name,
             language: v.language || '',
@@ -39,6 +39,18 @@ function App() {
             quality: v.quality || '',
             isMultilingual: v.is_multilingual || false
           }));
+
+          // Sort voices
+          const priorityNames = ['onyx', 'minh', 'khôi', 'khoi', 'huy', 'hieu', 'hiếu', 'namminh'];
+          formattedVoices.sort((a, b) => {
+            const scoreA = getVoiceScore(a, priorityNames);
+            const scoreB = getVoiceScore(b, priorityNames);
+            if (scoreA !== scoreB) {
+              return scoreB - scoreA;
+            }
+            return a.name.localeCompare(b.name);
+          });
+
           setVoices(formattedVoices);
           setSelectedVoice(formattedVoices[0].id);
         }
@@ -46,6 +58,18 @@ function App() {
       .catch(console.error);
     }
   }, [apiKey]);
+
+  const getVoiceScore = (v, priorityNames) => {
+    const name = v.name.toLowerCase();
+    
+    const isPriorityName = priorityNames.some(p => name.includes(p));
+    if (isPriorityName) return 100;
+    
+    const isVi = v.language.startsWith('vi') || v.otherLanguages.includes('vi-VN');
+    if (isVi && v.gender === 'female') return 50;
+    
+    return 0;
+  };
 
   const filteredVoices = voices.filter(v => {
     // Lọc theo ngôn ngữ
