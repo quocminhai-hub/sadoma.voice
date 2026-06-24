@@ -1,8 +1,0 @@
-{
-  "rewrites": [
-    {
-      "source": "/unmixr-api/:match*",
-      "destination": "https://unmixr.com/api/:match*"
-    }
-  ]
-}
