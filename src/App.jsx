@@ -188,6 +188,7 @@ function App() {
           <ScriptEditor 
             text={scriptText} 
             onChange={setScriptText} 
+            placeholder={selectedVibe.id === 'custom' ? "Gõ yêu cầu / Kịch bản của bạn tại đây..." : "Nhập văn bản..."}
           />
         </div>
       </div>
