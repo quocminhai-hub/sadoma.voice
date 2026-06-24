@@ -1,5 +1,5 @@
 export const generateSpeech = async (text, voice, apiKey) => {
-  const response = await fetch('/api/proxy/v1/short-tts/', {
+  const response = await fetch('/api/proxy?url=/v1/short-tts/', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,

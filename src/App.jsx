@@ -22,7 +22,7 @@ function App() {
 
   useEffect(() => {
     if (apiKey) {
-      fetch('/api/proxy/v1/voice-list/?page_size=1000', {
+      fetch('/api/proxy?url=/v1/voice-list/?page_size=1000', {
         headers: { 'Authorization': `Bearer ${apiKey}` }
       })
       .then(res => res.json())

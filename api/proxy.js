@@ -1,5 +1,6 @@
 export default async function handler(req, res) {
-  const targetUrl = 'https://unmixr.com/api' + req.url.replace('/api/proxy', '');
+  const urlParam = req.url.split('?url=')[1] || '';
+  const targetUrl = 'https://unmixr.com/api' + urlParam;
   
   try {
     const options = {
