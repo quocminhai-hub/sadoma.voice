@@ -1,7 +1,24 @@
 export default async function handler(req, res) {
-  const urlParam = req.url.split('?url=')[1] || '';
-  const targetUrl = 'https://unmixr.com/api' + urlParam;
+  let targetPath = req.query.url;
   
+  if (!targetPath) {
+    return res.status(400).json({ 
+      error: "Missing url parameter", 
+      reqUrl: req.url,
+      query: req.query 
+    });
+  }
+
+  // Vercel parses query string into req.query. We need to reconstruct it except for 'url'.
+  const queryParams = new URLSearchParams(req.query);
+  queryParams.delete('url');
+  const qs = queryParams.toString();
+  
+  let targetUrl = 'https://unmixr.com/api' + targetPath;
+  if (qs) {
+    targetUrl += (targetPath.includes('?') ? '&' : '?') + qs;
+  }
+
   try {
     const options = {
       method: req.method,
@@ -16,7 +33,6 @@ export default async function handler(req, res) {
     }
 
     if (req.method !== 'GET' && req.method !== 'HEAD' && req.body) {
-      // Vercel parses JSON body automatically
       options.body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
     }
 
@@ -33,6 +49,6 @@ export default async function handler(req, res) {
       res.status(response.status).send(Buffer.from(buffer));
     }
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message, targetUrl });
   }
 }
