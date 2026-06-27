@@ -171,7 +171,7 @@ function App() {
     setError(null);
     setIsLoading(true);
     try {
-      const url = await generateSpeech(scriptText, selectedVoice, apiKey);
+      const url = await generateSpeech(scriptText, selectedVoice, apiKey, selectedVibe);
       setAudioUrl(url);
     } catch (err) {
       setError(err.message || 'Có lỗi xảy ra khi gọi API.');

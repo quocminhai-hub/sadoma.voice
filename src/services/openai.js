@@ -1,4 +1,19 @@
-export const generateSpeech = async (text, voice, apiKey) => {
+export const generateSpeech = async (text, voice, apiKey, vibe) => {
+  let speed = vibe && vibe.speed ? vibe.speed : 1.0;
+  
+  // Create payload. Unmixr API might support speaking_rate or speed directly,
+  // or we can wrap the text in SSML to control prosody rate.
+  // We'll try sending speaking_rate first (similar to speaking_volume in docs).
+  // Some versions of their API also parse SSML if you pass XML tags.
+  // Let's wrap in SSML if speed is not 1.0 to ensure the engine catches it, 
+  // OR we can just pass the parameter. Let's pass the parameter `speaking_rate`.
+  
+  let finalText = text;
+  if (speed !== 1.0) {
+    // Wrap in SSML prosody tag to enforce speed change across most TTS engines
+    finalText = `<speak><prosody rate="${speed}">${text}</prosody></speak>`;
+  }
+
   const response = await fetch('/api/proxy?url=/v1/short-tts/', {
     method: 'POST',
     headers: {
@@ -6,10 +21,11 @@ export const generateSpeech = async (text, voice, apiKey) => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      text: text,
+      text: finalText,
       voice_id: voice,
       language: "en-US",
-      response_type: "url"
+      response_type: "url",
+      speaking_rate: speed
     }),
   });
 
