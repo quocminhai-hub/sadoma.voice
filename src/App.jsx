@@ -4,7 +4,6 @@ import VoiceSelector from './components/VoiceSelector';
 import VibeSelector from './components/VibeSelector';
 import ScriptEditor from './components/ScriptEditor';
 import FooterAction from './components/FooterAction';
-import VoiceCloningModal from './components/VoiceCloningModal';
 import { generateSpeech } from './services/openai';
 import { VIBES } from './constants';
 
@@ -20,73 +19,44 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [audioUrl, setAudioUrl] = useState(null);
   const [error, setError] = useState(null);
-  const [isCloneModalOpen, setIsCloneModalOpen] = useState(false);
-
-  const fetchVoicesData = () => {
-    if (!apiKey) return;
-    
-    Promise.all([
-      fetch('/api/proxy?url=/v1/voice-list/?page_size=1000', { headers: { 'Authorization': `Bearer ${apiKey}` } }).then(res => res.json()),
-      fetch('/api/proxy?url=/v1/cloned-voice-list/?page_size=1000', { headers: { 'Authorization': `Bearer ${apiKey}` } }).then(res => res.json()).catch(() => ({ results: [] }))
-    ])
-    .then(([prebuiltData, clonedData]) => {
-      const prebuiltList = prebuiltData.results || prebuiltData.data || [];
-      const clonedList = clonedData.results || clonedData.data || [];
-
-      let formattedVoices = [];
-
-      if (Array.isArray(prebuiltList)) {
-        formattedVoices = [...formattedVoices, ...prebuiltList.map(v => ({
-          id: v.uuid || v.id || v.voice_id, 
-          name: v.character || v.name || v.voice_name,
-          language: v.language || '',
-          otherLanguages: v.other_languages || [],
-          gender: v.gender ? v.gender.toLowerCase() : '',
-          avatar: v.avatar_url || '',
-          quality: v.quality || '',
-          isMultilingual: v.is_multilingual || false,
-          isClone: false
-        }))];
-      }
-
-      if (Array.isArray(clonedList)) {
-        formattedVoices = [...formattedVoices, ...clonedList.map(v => ({
-          id: v.uuid || v.id || v.voice_id, 
-          name: (v.character || v.name || v.voice_name) + ' (Clone)',
-          language: v.language || 'vi', 
-          otherLanguages: v.other_languages || ['vi-VN'],
-          gender: v.gender ? v.gender.toLowerCase() : 'all',
-          avatar: v.avatar_url || '',
-          quality: v.quality || '',
-          isMultilingual: v.is_multilingual || false,
-          isClone: true
-        }))];
-      }
-
-      if (formattedVoices.length > 0) {
-        const priorityNames = ['onyx', 'minh', 'khôi', 'khoi', 'huy', 'hieu', 'hiếu', 'namminh'];
-        formattedVoices.sort((a, b) => {
-          if (a.isClone && !b.isClone) return -1;
-          if (!a.isClone && b.isClone) return 1;
-
-          const scoreA = getVoiceScore(a, priorityNames);
-          const scoreB = getVoiceScore(b, priorityNames);
-          if (scoreA !== scoreB) {
-            return scoreB - scoreA;
-          }
-          return a.name.localeCompare(b.name);
-        });
-
-        setVoices(formattedVoices);
-        // Only set selectedVoice if it's empty, so we don't override user selection on refresh
-        setSelectedVoice(prev => prev || formattedVoices[0].id);
-      }
-    })
-    .catch(console.error);
-  };
 
   useEffect(() => {
-    fetchVoicesData();
+    if (apiKey) {
+      fetch('/api/proxy?url=/v1/voice-list/?page_size=1000', {
+        headers: { 'Authorization': `Bearer ${apiKey}` }
+      })
+      .then(res => res.json())
+      .then(data => {
+        const voiceList = data.results || data.data || [];
+        if (Array.isArray(voiceList) && voiceList.length > 0) {
+          let formattedVoices = voiceList.map(v => ({ 
+            id: v.uuid || v.id || v.voice_id, 
+            name: v.character || v.name || v.voice_name,
+            language: v.language || '',
+            otherLanguages: v.other_languages || [],
+            gender: v.gender ? v.gender.toLowerCase() : '',
+            avatar: v.avatar_url || '',
+            quality: v.quality || '',
+            isMultilingual: v.is_multilingual || false
+          }));
+
+          // Sort voices
+          const priorityNames = ['onyx', 'minh', 'khôi', 'khoi', 'huy', 'hieu', 'hiếu', 'namminh'];
+          formattedVoices.sort((a, b) => {
+            const scoreA = getVoiceScore(a, priorityNames);
+            const scoreB = getVoiceScore(b, priorityNames);
+            if (scoreA !== scoreB) {
+              return scoreB - scoreA;
+            }
+            return a.name.localeCompare(b.name);
+          });
+
+          setVoices(formattedVoices);
+          setSelectedVoice(formattedVoices[0].id);
+        }
+      })
+      .catch(console.error);
+    }
   }, [apiKey]);
 
   const getVoiceScore = (v, priorityNames) => {
@@ -187,17 +157,7 @@ function App() {
       <div className="section">
         <div className="section-title no-line" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
           <span>VOICE (UNMIXR)</span>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <button
-              onClick={() => setIsCloneModalOpen(true)}
-              style={{
-                padding: '8px 12px', background: '#4CAF50', color: '#fff',
-                border: 'none', borderRadius: '4px', cursor: 'pointer',
-                fontSize: '13px', fontWeight: 'bold'
-              }}
-            >
-              + Tạo giọng (Clone)
-            </button>
+          <div style={{ display: 'flex', gap: '10px' }}>
             <input 
               type="text" 
               placeholder="Tìm tên..." 
@@ -263,13 +223,6 @@ function App() {
         onPlay={handlePlay} 
         isLoading={isLoading} 
         audioUrl={audioUrl} 
-      />
-
-      <VoiceCloningModal 
-        isOpen={isCloneModalOpen}
-        onClose={() => setIsCloneModalOpen(false)}
-        apiKey={apiKey}
-        onSuccess={fetchVoicesData}
       />
     </>
   );
