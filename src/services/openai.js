@@ -42,3 +42,28 @@ export const generateSpeech = async (text, voice, apiKey) => {
     return URL.createObjectURL(blob);
   }
 };
+
+export const cloneVoice = async (file, name, description, apiKey) => {
+  const formData = new FormData();
+  formData.append('audio', file);
+  formData.append('name', name);
+  if (description) {
+    formData.append('description', description);
+  }
+
+  const response = await fetch('/api/clone', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      // Do not set Content-Type here, browser sets it with boundary for FormData automatically
+    },
+    body: formData,
+  });
+
+  const data = await response.json();
+  if (!response.ok || data.status !== 'SUCCESS') {
+    throw new Error(data.error || data.message || JSON.stringify(data));
+  }
+
+  return data;
+};
