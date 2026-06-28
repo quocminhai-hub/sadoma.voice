@@ -4,30 +4,19 @@ import VoiceSelector from './components/VoiceSelector';
 import VibeSelector from './components/VibeSelector';
 import ScriptEditor from './components/ScriptEditor';
 import FooterAction from './components/FooterAction';
-import AudioUploader from './components/AudioUploader';
-import { generateUnmixrSpeech, generateMinimaxSpeech, cloneMinimaxVoice } from './services/openai';
+import { generateUnmixrSpeech } from './services/openai';
 import { VIBES } from './constants';
 
 function App() {
-  // --- Unmixr State ---
   const [unmixrApiKey, setUnmixrApiKey] = useState('31fab03df4736b426e831a6a16ed576e7a6339bc');
   const [unmixrVoices, setUnmixrVoices] = useState([]);
   const [selectedUnmixrVoice, setSelectedUnmixrVoice] = useState('');
   
-  // --- Minimax State ---
-  const [minimaxApiKey, setMinimaxApiKey] = useState('sk-api-6YQ3QC4bSlarGroR4ozbrGWQHVcRVOTfnayoMUsazpIKemvzxQKgR4ldrK6icp7CStd9YOHzx4cN9Uz_fkj8ZpVujAzcHH4eOoJDUkzTwIW9prRwvbsh4aQ');
-  const [minimaxGroupId, setMinimaxGroupId] = useState('2071140823059145067');
-  const [clonedVoiceId, setClonedVoiceId] = useState('');
-  const [isCloning, setIsCloning] = useState(false);
-
-  // --- Shared/Common State ---
   const [selectedLanguage, setSelectedLanguage] = useState('all');
   const [selectedGender, setSelectedGender] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedVibe, setSelectedVibe] = useState(VIBES[0]);
   const [scriptText, setScriptText] = useState(VIBES[0].script);
-  
-  const [activeSection, setActiveSection] = useState('unmixr'); // 'unmixr' or 'minimax'
   
   const [isLoading, setIsLoading] = useState(false);
   const [audioUrl, setAudioUrl] = useState(null);
@@ -103,41 +92,14 @@ function App() {
     setScriptText(vibe.script);
   };
 
-  const handleCloneUpload = async (file) => {
-    if (!minimaxApiKey || !minimaxGroupId) {
-      setError("Thiếu API Key hoặc Group ID của Minimax!");
-      return;
-    }
-    setError(null);
-    setIsCloning(true);
-    try {
-      const voiceId = await cloneMinimaxVoice(file, minimaxApiKey, minimaxGroupId);
-      setClonedVoiceId(voiceId);
-      setActiveSection('minimax');
-      alert(`Clone giọng thành công! Voice ID của bạn là: ${voiceId}`);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setIsCloning(false);
-    }
-  };
-
   const handlePlay = async () => {
     setError(null);
     setIsLoading(true);
     setAudioUrl(null);
     
     try {
-      let url;
-      if (activeSection === 'unmixr') {
-        if (!unmixrApiKey || !selectedUnmixrVoice) throw new Error("Vui lòng nhập Unmixr API Key và chọn giọng.");
-        url = await generateUnmixrSpeech(scriptText, selectedUnmixrVoice, unmixrApiKey, selectedVibe);
-      } else {
-        if (!minimaxApiKey || !minimaxGroupId || !clonedVoiceId) {
-          throw new Error("Vui lòng nhập Minimax API Key, Group ID và upload audio để clone giọng.");
-        }
-        url = await generateMinimaxSpeech(scriptText, clonedVoiceId, minimaxApiKey, minimaxGroupId, selectedVibe);
-      }
+      if (!unmixrApiKey || !selectedUnmixrVoice) throw new Error("Vui lòng nhập Unmixr API Key và chọn giọng.");
+      const url = await generateUnmixrSpeech(scriptText, selectedUnmixrVoice, unmixrApiKey, selectedVibe);
       setAudioUrl(url);
     } catch (err) {
       setError(err.message || 'Có lỗi xảy ra khi gọi API.');
@@ -150,10 +112,9 @@ function App() {
     <>
       <Header />
       
-      {/* NỬA TRÊN: UNMIXR TTS */}
-      <div className="section" onClick={() => setActiveSection('unmixr')} style={{ border: activeSection === 'unmixr' ? '2px solid #ffb020' : '2px solid transparent', padding: '10px' }}>
+      <div className="section" style={{ padding: '10px' }}>
         <div className="section-title no-line" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-          <span>1. TEXT-TO-SPEECH (UNMIXR)</span>
+          <span>TEXT-TO-SPEECH (UNMIXR)</span>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
             <span style={{ fontSize: '12px', color: '#888' }}>Unmixr API Key:</span>
             <input 
@@ -194,41 +155,6 @@ function App() {
         />
       </div>
 
-      <hr style={{ borderColor: '#333', margin: '20px 0' }} />
-
-      {/* NỬA DƯỚI: MINIMAX CLONING */}
-      <div className="section" onClick={() => setActiveSection('minimax')} style={{ border: activeSection === 'minimax' ? '2px solid #ffb020' : '2px solid transparent', padding: '10px' }}>
-        <div className="section-title no-line" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-          <span>2. VOICE CLONING (MINIMAX)</span>
-          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <span style={{ fontSize: '12px', color: '#888' }}>Group ID:</span>
-            <input 
-              type="text" 
-              className="api-input" 
-              value={minimaxGroupId}
-              onChange={(e) => setMinimaxGroupId(e.target.value)}
-              style={{ width: '150px' }}
-            />
-            <span style={{ fontSize: '12px', color: '#888' }}>Minimax Key:</span>
-            <input 
-              type="password" 
-              className="api-input" 
-              value={minimaxApiKey}
-              onChange={(e) => setMinimaxApiKey(e.target.value)}
-              style={{ width: '150px' }}
-            />
-          </div>
-        </div>
-
-        <AudioUploader onUploadSuccess={handleCloneUpload} isUploading={isCloning} />
-        
-        {clonedVoiceId && (
-          <div style={{ marginTop: '10px', color: '#4ade80' }}>
-            <strong>Đã Clone xong! Voice ID hiện tại: </strong> {clonedVoiceId}
-          </div>
-        )}
-      </div>
-
       <div className="main-grid" style={{ marginTop: '20px' }}>
         <div className="vibe-section">
           <div className="section-title">VIBE</div>
@@ -236,7 +162,7 @@ function App() {
         </div>
 
         <div className="script-section">
-          <div className="section-title">SCRIPT (Áp dụng cho {activeSection.toUpperCase()})</div>
+          <div className="section-title">SCRIPT</div>
           <ScriptEditor 
             text={scriptText} 
             onChange={setScriptText} 
