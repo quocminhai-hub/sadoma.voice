@@ -8,6 +8,12 @@ import { RANDOM_SCRIPTS } from './constants';
 import { Download } from 'lucide-react';
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('sadoma_auth') === 'true';
+  });
+  const [passwordInput, setPasswordInput] = useState('');
+  const [loginError, setLoginError] = useState('');
+
   const [unmixrApiKey, setUnmixrApiKey] = useState('31fab03df4736b426e831a6a16ed576e7a6339bc');
   const [unmixrVoices, setUnmixrVoices] = useState([]);
   const [selectedUnmixrVoice, setSelectedUnmixrVoice] = useState('');
@@ -120,6 +126,42 @@ function App() {
       setIsLoading(false);
     }
   };
+
+  const handleLogin = (e) => {
+    e.preventDefault();
+    // Mật khẩu mặc định là 'sadoma123'. 
+    // Bạn có thể thêm biến môi trường VITE_SITE_PASSWORD vào project trên Vercel để đổi mật khẩu.
+    const correctPassword = import.meta.env.VITE_SITE_PASSWORD || 'sadoma123';
+    
+    if (passwordInput === correctPassword) {
+      setIsAuthenticated(true);
+      localStorage.setItem('sadoma_auth', 'true');
+      setLoginError('');
+    } else {
+      setLoginError('Mật khẩu không đúng!');
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', backgroundColor: '#121212', color: '#fff', padding: '20px' }}>
+        <h2 style={{ marginBottom: '20px', color: '#ffb020' }}>Sadoma Voice - Private Access</h2>
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '15px', alignItems: 'center' }}>
+          <input 
+            type="password" 
+            placeholder="Nhập mật khẩu..." 
+            value={passwordInput}
+            onChange={(e) => setPasswordInput(e.target.value)}
+            style={{ padding: '12px', borderRadius: '8px', border: '1px solid #444', background: '#222', color: '#fff', width: '280px', fontSize: '16px', outline: 'none' }}
+          />
+          <button type="submit" style={{ padding: '12px 20px', borderRadius: '8px', border: 'none', background: '#ffb020', color: '#000', fontWeight: 'bold', cursor: 'pointer', width: '280px', fontSize: '16px', transition: 'background 0.2s' }}>
+            Đăng Nhập
+          </button>
+        </form>
+        {loginError && <div style={{ color: '#ff4444', marginTop: '15px' }}>{loginError}</div>}
+      </div>
+    );
+  }
 
   return (
     <>
