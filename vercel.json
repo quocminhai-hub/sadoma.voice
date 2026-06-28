@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/proxy/:match*",
+      "destination": "https://unmixr.com/api/:match*"
+    },
+    {
+      "source": "/api/minimax/:match*",
+      "destination": "https://api.minimax.io/:match*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

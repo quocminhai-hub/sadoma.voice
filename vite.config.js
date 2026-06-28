@@ -10,6 +10,11 @@ export default defineConfig({
         target: 'https://unmixr.com',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/proxy/, '/api')
+      },
+      '/api/minimax': {
+        target: 'https://api.minimax.io',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/minimax/, '')
       }
     }
   }
