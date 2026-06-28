@@ -6,7 +6,7 @@ export const generateUnmixrSpeech = async (text, voice, apiKey, vibe) => {
     finalText = `<speak><prosody rate="${speed}">${text}</prosody></speak>`;
   }
 
-  const response = await fetch('/api/proxy/v1/short-tts/', {
+  const response = await fetch('/unmixr-api/v1/short-tts/', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
@@ -66,7 +66,7 @@ export const generateMinimaxSpeech = async (text, voice, apiKey, groupId, vibe) 
     }
   };
 
-  const response = await fetch(`/api/minimax/v1/t2a_v2?GroupId=${groupId}`, {
+  const response = await fetch(`/minimax-api/v1/t2a_v2?GroupId=${groupId}`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
@@ -107,7 +107,7 @@ export const cloneMinimaxVoice = async (audioFile, apiKey, groupId, customPrefix
   formData.append('file', audioFile);
   formData.append('purpose', 'voice_clone');
 
-  const uploadRes = await fetch(`/api/minimax/v1/files/upload?GroupId=${groupId}`, {
+  const uploadRes = await fetch(`/minimax-api/v1/files/upload?GroupId=${groupId}`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`
@@ -139,7 +139,7 @@ export const cloneMinimaxVoice = async (audioFile, apiKey, groupId, customPrefix
 
   // BƯỚC 2: TẠO VOICE CLONE TỪ FILE VỪA UPLOAD
   const voiceId = `${customPrefix}_${Date.now()}`;
-  const cloneRes = await fetch(`/api/minimax/v1/voice_clone?GroupId=${groupId}`, {
+  const cloneRes = await fetch(`/minimax-api/v1/voice_clone?GroupId=${groupId}`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,

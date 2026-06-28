@@ -1,11 +1,11 @@
 {
   "rewrites": [
     {
-      "source": "/api/proxy/:path*",
+      "source": "/unmixr-api/:path*",
       "destination": "https://unmixr.com/api/:path*"
     },
     {
-      "source": "/api/minimax/:path*",
+      "source": "/minimax-api/:path*",
       "destination": "https://api.minimax.io/:path*"
     },
     {
