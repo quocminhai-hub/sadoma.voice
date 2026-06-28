@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import VoiceSelector from './components/VoiceSelector';
-import VibeSelector from './components/VibeSelector';
 import ScriptEditor from './components/ScriptEditor';
 import FooterAction from './components/FooterAction';
 import { generateUnmixrSpeech } from './services/openai';
-import { VIBES } from './constants';
 
 function App() {
   const [unmixrApiKey, setUnmixrApiKey] = useState('31fab03df4736b426e831a6a16ed576e7a6339bc');
@@ -15,8 +13,7 @@ function App() {
   const [selectedLanguage, setSelectedLanguage] = useState('all');
   const [selectedGender, setSelectedGender] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedVibe, setSelectedVibe] = useState(VIBES[0]);
-  const [scriptText, setScriptText] = useState(VIBES[0].script);
+  const [scriptText, setScriptText] = useState('Nào mọi người ơi, chào mừng đến với buổi đấu giá trang sức trực tuyến lớn nhất quả đất! Các bạn đã sẵn sàng chưa? Hàng ngàn viên kim cương lấp lánh đang chờ đón chủ nhân. Ai trả một trăm? Có ai trả hai trăm không? Nhanh tay lên nào, chốt đơn, chốt đơn!');
   
   const [isLoading, setIsLoading] = useState(false);
   const [audioUrl, setAudioUrl] = useState(null);
@@ -87,11 +84,6 @@ function App() {
     return passLang && passGender && passSearch;
   });
 
-  const handleVibeChange = (vibe) => {
-    setSelectedVibe(vibe);
-    setScriptText(vibe.script);
-  };
-
   const handlePlay = async () => {
     setError(null);
     setIsLoading(true);
@@ -99,7 +91,7 @@ function App() {
     
     try {
       if (!unmixrApiKey || !selectedUnmixrVoice) throw new Error("Vui lòng nhập Unmixr API Key và chọn giọng.");
-      const url = await generateUnmixrSpeech(scriptText, selectedUnmixrVoice, unmixrApiKey, selectedVibe);
+      const url = await generateUnmixrSpeech(scriptText, selectedUnmixrVoice, unmixrApiKey);
       setAudioUrl(url);
     } catch (err) {
       setError(err.message || 'Có lỗi xảy ra khi gọi API.');
@@ -155,13 +147,8 @@ function App() {
         />
       </div>
 
-      <div className="main-grid" style={{ marginTop: '20px' }}>
-        <div className="vibe-section">
-          <div className="section-title">VIBE</div>
-          <VibeSelector selectedVibe={selectedVibe} onSelect={handleVibeChange} />
-        </div>
-
-        <div className="script-section">
+      <div className="main-grid" style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
+        <div className="script-section" style={{ maxWidth: '800px', width: '100%' }}>
           <div className="section-title">SCRIPT</div>
           <ScriptEditor 
             text={scriptText} 

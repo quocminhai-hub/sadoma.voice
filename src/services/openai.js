@@ -1,48 +1,45 @@
-export const generateUnmixrSpeech = async (text, voice, apiKey, vibe) => {
-  let speed = vibe && vibe.speed ? vibe.speed : 1.0;
-  
-  let finalText = text;
-  if (speed !== 1.0) {
-    finalText = `<speak><prosody rate="${speed}">${text}</prosody></speak>`;
-  }
+export const generateUnmixrSpeech = async (text, voice, apiKey) => {
+  const payload = {
+    "audio_format": "mp3",
+    "voice_id": voice,
+    "text": text,
+    "model": "Standard"
+  };
 
   const response = await fetch('/api/proxy?url=/v1/short-tts/', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json'
     },
-    body: JSON.stringify({
-      text: finalText,
-      voice_id: voice,
-      language: "en-US",
-      response_type: "url",
-      speaking_rate: speed
-    }),
+    body: JSON.stringify(payload),
   });
 
   const contentType = response.headers.get('content-type') || '';
 
-  if (!response.ok) {
-    if (contentType.includes('application/json')) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || errorData.message || JSON.stringify(errorData));
-    }
-    throw new Error(`Lỗi API: ${response.status} ${response.statusText}`);
+  if (!response.ok && !contentType.includes('application/json')) {
+    const errorText = await response.text();
+    throw new Error(`Lỗi API (${response.status}): ${errorText.substring(0, 100)}...`);
   }
 
   if (contentType.includes('application/json')) {
-    const data = await response.json();
-    const audioUrl = data.url || data.audio_url || data.audio || data.data?.url || (typeof data.data === 'string' && data.data.startsWith('http') ? data.data : null);
-    if (audioUrl && typeof audioUrl === 'string') {
-      return audioUrl;
-    } else {
-      throw new Error("Lỗi API Unmixr: " + JSON.stringify(data));
+    let data;
+    try {
+      data = await response.json();
+    } catch (err) {
+      throw new Error(`Lỗi parse JSON từ API Unmixr.`);
     }
-  } else {
-    const blob = await response.blob();
-    return URL.createObjectURL(blob);
+    
+    if (data.status === 'success' || data.success || data.audio_url || data.url) {
+      return data.audio_url || data.url || data.file_url;
+    } else {
+      throw new Error(data.message || data.error || JSON.stringify(data));
+    }
   }
+
+  const buffer = await response.arrayBuffer();
+  const blob = new Blob([buffer], { type: 'audio/mp3' });
+  return URL.createObjectURL(blob);
 };
 
 export const generateMinimaxSpeech = async (text, voice, apiKey, groupId, vibe) => {
