@@ -24,7 +24,7 @@ function App() {
 
   useEffect(() => {
     if (unmixrApiKey) {
-      fetch('/unmixr-api/v1/voice-list/?page_size=1000', {
+      fetch('/api/proxy?url=/v1/voice-list/?page_size=1000', {
         headers: { 'Authorization': `Bearer ${unmixrApiKey}` }
       })
       .then(async (res) => {

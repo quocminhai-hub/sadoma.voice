@@ -6,7 +6,7 @@ export const generateUnmixrSpeech = async (text, voice, apiKey, vibe) => {
     finalText = `<speak><prosody rate="${speed}">${text}</prosody></speak>`;
   }
 
-  const response = await fetch('/unmixr-api/v1/short-tts/', {
+  const response = await fetch('/api/proxy?url=/v1/short-tts/', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,

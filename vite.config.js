@@ -6,15 +6,10 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/unmixr-api': {
-        target: 'https://unmixr.com/api',
+      '/api/proxy': {
+        target: 'https://unmixr.com',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/unmixr-api/, '')
-      },
-      '/minimax-api': {
-        target: 'https://api.minimax.io',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/minimax-api/, '')
+        rewrite: (path) => path.replace(/^\/api\/proxy/, '/api')
       }
     }
   }
