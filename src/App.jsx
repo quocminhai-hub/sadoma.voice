@@ -4,6 +4,8 @@ import VoiceSelector from './components/VoiceSelector';
 import ScriptEditor from './components/ScriptEditor';
 import FooterAction from './components/FooterAction';
 import { generateUnmixrSpeech } from './services/openai';
+import { RANDOM_SCRIPTS } from './constants';
+import { Download } from 'lucide-react';
 
 function App() {
   const [unmixrApiKey, setUnmixrApiKey] = useState('31fab03df4736b426e831a6a16ed576e7a6339bc');
@@ -13,11 +15,16 @@ function App() {
   const [selectedLanguage, setSelectedLanguage] = useState('all');
   const [selectedGender, setSelectedGender] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [scriptText, setScriptText] = useState('Nào mọi người ơi, chào mừng đến với buổi đấu giá trang sức trực tuyến lớn nhất quả đất! Các bạn đã sẵn sàng chưa? Hàng ngàn viên kim cương lấp lánh đang chờ đón chủ nhân. Ai trả một trăm? Có ai trả hai trăm không? Nhanh tay lên nào, chốt đơn, chốt đơn!');
+  
+  // Lấy ngẫu nhiên một script khi tải trang
+  const [scriptText, setScriptText] = useState(() => {
+    return RANDOM_SCRIPTS[Math.floor(Math.random() * RANDOM_SCRIPTS.length)];
+  });
   
   const [isLoading, setIsLoading] = useState(false);
   const [audioUrl, setAudioUrl] = useState(null);
   const [error, setError] = useState(null);
+  const [audioHistory, setAudioHistory] = useState([]);
 
   useEffect(() => {
     if (unmixrApiKey) {
@@ -93,6 +100,20 @@ function App() {
       if (!unmixrApiKey || !selectedUnmixrVoice) throw new Error("Vui lòng nhập Unmixr API Key và chọn giọng.");
       const url = await generateUnmixrSpeech(scriptText, selectedUnmixrVoice, unmixrApiKey);
       setAudioUrl(url);
+      
+      // Tìm tên giọng đọc để lưu vào lịch sử
+      const voiceObj = unmixrVoices.find(v => v.id === selectedUnmixrVoice);
+      const voiceName = voiceObj ? voiceObj.name : 'Unknown Voice';
+
+      // Lưu vào lịch sử
+      setAudioHistory(prev => [{
+        id: Date.now().toString(),
+        url: url,
+        text: scriptText.substring(0, 50) + (scriptText.length > 50 ? '...' : ''),
+        voiceName: voiceName,
+        timestamp: new Date().toLocaleTimeString()
+      }, ...prev]);
+      
     } catch (err) {
       setError(err.message || 'Có lỗi xảy ra khi gọi API.');
     } finally {
@@ -165,6 +186,40 @@ function App() {
         isLoading={isLoading} 
         audioUrl={audioUrl} 
       />
+
+      {/* STORAGE SECTION */}
+      {audioHistory.length > 0 && (
+        <div className="section" style={{ marginTop: '20px', padding: '15px' }}>
+          <div className="section-title">KHO LƯU TRỮ (HISTORY)</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {audioHistory.map(item => (
+              <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px', background: '#1a1a1a', borderRadius: '8px', border: '1px solid #333' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', flex: 1, marginRight: '15px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                    <span style={{ color: '#ffb020', fontWeight: 'bold' }}>{item.voiceName}</span>
+                    <span style={{ color: '#888', fontSize: '12px' }}>{item.timestamp}</span>
+                  </div>
+                  <span style={{ color: '#ccc', fontSize: '13px', fontStyle: 'italic' }}>"{item.text}"</span>
+                </div>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                  <audio controls src={item.url} style={{ height: '35px', maxWidth: '250px' }}></audio>
+                  <a 
+                    href={item.url} 
+                    download={`Sadoma_${item.voiceName}_${item.id}.mp3`}
+                    style={{ background: '#222', color: 'white', padding: '8px', borderRadius: '5px', textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #444', transition: '0.2s' }}
+                    onMouseOver={e => e.currentTarget.style.background = '#444'}
+                    onMouseOut={e => e.currentTarget.style.background = '#222'}
+                    title="Tải xuống"
+                  >
+                    <Download size={18} />
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </>
   );
 }
